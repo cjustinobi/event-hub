@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 contract EventHub {
     uint256 public totalEvents;
+    bytes32[] eventIds;
 
     event NewEventCreated(
         bytes32 eventID,
@@ -75,6 +76,7 @@ contract EventHub {
             eventDataCID
         );
         totalEvents ++;
+        eventIds.push(eventId);
         return idToEvent[eventId].eventId;
     }
 
@@ -195,5 +197,29 @@ contract EventHub {
 
         require(sent, "Failed to send Ether");
         emit DepositsPaidOut(eventId);
+    }
+
+    function getEventId(uint i) public view returns (bytes32) {
+        return eventIds[i];
+    }
+
+    function getEvent(bytes32 eventId) public view returns (
+        string memory eventDataCID,
+        address eventOwner,
+        uint256 eventTimestamp,
+        uint256 maxCapacity,
+        uint256 deposit
+    ) {
+        return (
+        idToEvent[eventId].eventDataCID,
+        idToEvent[eventId].eventOwner,
+        idToEvent[eventId].eventTimestamp,
+        idToEvent[eventId].maxCapacity,
+        idToEvent[eventId].deposit
+        );
+    }
+
+    function getEventLength() public view returns (uint) {
+        return eventIds.length;
     }
 }
