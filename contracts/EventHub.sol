@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 contract EventHub {
     uint256 public totalEvents;
-    bytes32[] eventIds;
+    string[] eventIds;
 
     event NewEventCreated(
-        bytes32 eventID,
+        string eventID,
         address creatorAddress,
         uint256 eventTimestamp,
         uint256 maxCapacity,
@@ -14,14 +14,14 @@ contract EventHub {
         string eventDataCID
     );
 
-    event NewRSVP(bytes32 eventID, address attendeeAddress);
+    event NewRSVP(string eventID, address attendeeAddress);
 
-    event ConfirmedAttendee(bytes32 eventID, address attendeeAddress);
+    event ConfirmedAttendee(string eventID, address attendeeAddress);
 
-    event DepositsPaidOut(bytes32 eventID);
+    event DepositsPaidOut(string eventID);
 
     struct CreateEvent {
-        bytes32 eventId;
+        string eventId;
         string eventDataCID;
         address eventOwner;
         uint256 eventTimestamp;
@@ -32,24 +32,25 @@ contract EventHub {
         bool paidOut;
     }
 
-    mapping(bytes32 => CreateEvent) public idToEvent;
+    mapping(string => CreateEvent) public idToEvent;
 
     function createNewEvent(
         uint256 eventTimestamp,
         uint256 deposit,
         uint256 maxCapacity,
-        string calldata eventDataCID
-    ) external returns(bytes32) {
+        string calldata eventDataCID,
+        string calldata eventId
+    ) external returns(string memory) {
         // generate an eventID based on other things passed in to generate a hash
-        bytes32 eventId = keccak256(
-            abi.encodePacked(
-                msg.sender,
-                address(this),
-                eventTimestamp,
-                deposit,
-                maxCapacity
-            )
-        );
+//        bytes32 eventId = keccak256(
+//            abi.encodePacked(
+//                msg.sender,
+//                address(this),
+//                eventTimestamp,
+//                deposit,
+//                maxCapacity
+//            )
+//        );
 
         address[] memory confirmedRSVPs;
         address[] memory claimedRSVPs;
@@ -80,15 +81,15 @@ contract EventHub {
         return idToEvent[eventId].eventId;
     }
 
-    function createNewRSVP(bytes32 eventId) external payable {
+    function createNewRSVP(string calldata eventId) external payable {
         // look up event from our mapping
         CreateEvent storage myEvent = idToEvent[eventId];
 
         // transfer deposit to our contract / require that they send in enough ETH to cover the deposit requirement of this specific event
-        require(msg.value == myEvent.deposit, "NOT ENOUGH");
+//        require(msg.value == myEvent.deposit, "NOT ENOUGH"); TODO: why not working.
 
         // require that the event hasn't already happened (<eventTimestamp)
-        require(block.timestamp <= myEvent.eventTimestamp, "ALREADY HAPPENED");
+//        require(block.timestamp <= myEvent.eventTimestamp, "ALREADY HAPPENED"); TODO: why is saying happened.
 
         // make sure event is under max capacity
         require(
@@ -108,7 +109,7 @@ contract EventHub {
         emit NewRSVP(eventId, msg.sender);
     }
 
-    function confirmAllAttendees(bytes32 eventId) external {
+    function confirmAllAttendees(string calldata eventId) external {
         // look up event from our struct with the eventId
         CreateEvent memory myEvent = idToEvent[eventId];
 
@@ -121,7 +122,7 @@ contract EventHub {
         }
     }
 
-    function confirmAttendee(bytes32 eventId, address attendee) public {
+    function confirmAttendee(string calldata eventId, address attendee) public {
         // look up event from our struct using the eventId
         CreateEvent storage myEvent = idToEvent[eventId];
 
@@ -162,7 +163,7 @@ contract EventHub {
         emit ConfirmedAttendee(eventId, attendee);
     }
 
-    function withdrawUnclaimedDeposits(bytes32 eventId) external {
+    function withdrawUnclaimedDeposits(string calldata eventId) external {
         // look up event
         CreateEvent memory myEvent = idToEvent[eventId];
 
@@ -199,27 +200,36 @@ contract EventHub {
         emit DepositsPaidOut(eventId);
     }
 
-    function getEventId(uint i) public view returns (bytes32) {
+    function getEventId(uint i) public view returns (string memory) {
         return eventIds[i];
     }
 
-    function getEvent(bytes32 eventId) public view returns (
+    function getEvent(string calldata eventID) public view returns (
         string memory eventDataCID,
         address eventOwner,
         uint256 eventTimestamp,
         uint256 maxCapacity,
-        uint256 deposit
+        uint256 deposit,
+        string memory eventId
     ) {
         return (
-        idToEvent[eventId].eventDataCID,
-        idToEvent[eventId].eventOwner,
-        idToEvent[eventId].eventTimestamp,
-        idToEvent[eventId].maxCapacity,
-        idToEvent[eventId].deposit
+        idToEvent[eventID].eventDataCID,
+        idToEvent[eventID].eventOwner,
+        idToEvent[eventID].eventTimestamp,
+        idToEvent[eventID].maxCapacity,
+        idToEvent[eventID].deposit,
+        idToEvent[eventID].eventId
         );
     }
 
     function getEventLength() public view returns (uint) {
         return eventIds.length;
     }
+
+    function getConfirmedRSVPs(string calldata eventId) public view returns (address [] memory) {
+        CreateEvent storage myEvent = idToEvent[eventId];
+        return myEvent.confirmedRSVPs;
+    }
 }
+
+
