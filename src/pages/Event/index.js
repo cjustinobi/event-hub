@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import {ethers} from 'ethers'
 import styles from './Event.module.css'
 import getContract from '../../utils/contract'
+import {connectWallet} from '../../utils/interact'
 import { addToIPFS } from '../../utils/ipfs'
 
 function Event() {

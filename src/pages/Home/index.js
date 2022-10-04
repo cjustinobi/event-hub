@@ -1,6 +1,7 @@
 import { ethers } from 'ethers'
 import { useState, useEffect } from 'react'
 import getContract from '../../utils/contract'
+import { eventHubContract } from '../../utils/interact'
 import { eventList } from '../../utils/ipfs'
 import connect  from '../../utils/connect'
 import useIsConnected from '../../hooks/useIsConnected'
@@ -16,6 +17,18 @@ function Home() {
   const [contract, setContract] = useState()
   const [events, setEvents] = useState([])
 
+  function addSmartContractListener() {
+    eventHubContract.events.NewRSVP({}, (error, data) => {
+      if (error) {
+        console.log("😥 " + error.message);
+      } else {
+        console.log(data.returnValues[1]);
+        console.log("");
+        console.log("🎉 Your message has been updated!");
+      }
+    });
+  }
+
   const rsvp = async (eventId, deposit) => {
     if (isConnected) {
       setContract(getContract())
@@ -26,6 +39,10 @@ function Home() {
           // value: ethers.utils.formatUnits(deposit, 'ether')
         })
         console.log(res)
+
+        contract.events.NewRSVP()
+          .on("connected", function(subscriptionId){ console.log(subscriptionId);})
+          .on('data', function(event){ console.log(event);})
       }
     } else {
       const address = await connect()
@@ -67,6 +84,7 @@ function Home() {
   useEffect(async () => {
     // setContract(getContract())
     setEvents(await eventList())
+    addSmartContractListener()
   }, [])
 
 
