@@ -74,8 +74,8 @@
       ]
     },
     "/media/justin/New Volume/Project/ethereum/event-staking/node_modules/hardhat/console.sol": {
-      "lastModificationDate": 1663094606989,
-      "contentHash": "cc4777addd464ea56fa35b1c45df0591",
+      "lastModificationDate": 1664814319411,
+      "contentHash": "4ff3cd2f6272c9a6516e9ee4f2b967d3",
       "sourceName": "hardhat/console.sol",
       "solcConfig": {
         "version": "0.8.4",
@@ -102,7 +102,7 @@
       },
       "imports": [],
       "versionPragmas": [
-        ">=0.4.22 <0.9.0"
+        ">= 0.4.22 <0.9.0"
       ],
       "artifacts": [
         "console"

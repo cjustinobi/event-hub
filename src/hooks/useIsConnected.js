@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
-import { ethers } from 'ethers'
 
 export default function () {
 
   const [isConnected, setIsConnected] = useState(false)
+  const [address, setAddress] = useState('')
 
   async function checkIsConnected() {
-    const accounts = await window.ethereum.request({method: 'eth_accounts'});
+    const accounts = await window.ethereum.request({method: 'eth_accounts'})
+    setAddress(accounts[0])
     setIsConnected(!!accounts.length)
     return !!accounts.length
   }
@@ -16,6 +17,6 @@ export default function () {
     checkIsConnected()
   })
 
-  return [isConnected]
+  return [isConnected, address]
 
 }

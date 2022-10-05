@@ -4,7 +4,7 @@ const { createAlchemyWeb3 } = require("@alch/alchemy-web3")
 const web3 = createAlchemyWeb3(alchemyKey)
 
 const contractABI = require('../artifacts/contracts/EventHub.sol/EventHub.json')
-const contractAddress = '0xDF7631473550ACd833695a4b3fa1D0aCBdCC8Eae'
+const contractAddress = '0xc52D6596F635c0A65634282a7ADc687D4c8495B8'
 
 export const eventHubContract = new web3.eth.Contract(
   contractABI.abi,
@@ -16,11 +16,9 @@ export const connectWallet = async () => {
     try {
       const addressArray = await window.ethereum.request({
         method: "eth_requestAccounts",
-      });
-      return {
-        status: "👆🏽 Write a message in the text-field above.",
-        address: addressArray[0],
-      };
+      })
+
+      return addressArray[0]
 
     } catch (err) {
       return {
@@ -43,6 +41,56 @@ export const connectWallet = async () => {
           </p>
         </span>
       ),
+    };
+  }
+};
+
+export const createNewEvent = async (address, { eventTimestamp, deposit, maxCapacity, CID, ID }) => {
+
+  //input error handling
+  if (!window.ethereum || address === null) {
+    return {
+      status:
+        "💡 Connect your Metamask wallet to update the message on the blockchain.",
+    };
+  }
+
+  // if (message.trim() === "") {
+  //   return {
+  //     status: "❌ Your message cannot be an empty string.",
+  //   };
+  // }
+
+
+  //set up transaction parameters
+  const transactionParameters = {
+    to: contractAddress, // Required except during contract publications.
+    from: address, // must match user's active address.
+    data: eventHubContract.methods.createNewEvent(eventTimestamp, deposit, maxCapacity, CID, ID).encodeABI(),
+  };
+
+  //sign the transaction
+  try {
+    const txHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [transactionParameters],
+    });
+    return {
+      status: (
+        <span>
+          ✅{" "}
+          <a target="_blank" href={`https://goerli.etherscan.io/tx/${txHash}`}>
+            View the status of your transaction on Etherscan!
+          </a>
+          <br />
+          ℹ️ Once the transaction is verified by the network, the message will
+          be updated automatically.
+        </span>
+      ),
+    };
+  } catch (error) {
+    return {
+      status: "😥 " + error.message,
     };
   }
 };

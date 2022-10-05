@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import getContract from '../../utils/contract'
+import {eventHubContract} from '../../utils/interact'
 import './Payout.css';
 
 import { ethers } from 'ethers';
@@ -15,7 +15,7 @@ function Payout() {
   async function payout(e) {
     e.preventDefault();
     // if (contract) {
-      const payoutButton = await contract.payout('0')
+      const payoutButton = await eventHubContract.payout('0')
       // const payoutButton = await contract.totalEvents()
   // const res = await payoutButton.wait()
 
@@ -24,7 +24,7 @@ function Payout() {
   }
 
   useEffect(() => {
-    setContract(getContract())
+
   }, [])
 
   return( 

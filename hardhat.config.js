@@ -5,7 +5,7 @@ require("@nomiclabs/hardhat-waffle");
 require("hardhat-gas-reporter");
 require("solidity-coverage");
 
-require("dotenv").config();
+
 
 const { GOERLI_URL, PRIVATE_KEY } = process.env
 
@@ -29,7 +29,7 @@ module.exports = {
   solidity: "0.8.4",
   defaultNetwork: "goerli",
   paths: {
-    artifacts: './client/src/artifacts',
+    artifacts: './src/artifacts',
   },
   networks: {
     hardhat: {
@@ -37,7 +37,7 @@ module.exports = {
     },
     goerli: {
       url: GOERLI_URL,
-      accounts: ['02ed88b5c5cf0a2a99bc20cbe49b1381abf646271f14129b90aeed9b07df7c29'],
+      accounts: [PRIVATE_KEY],
     }
   }
 };

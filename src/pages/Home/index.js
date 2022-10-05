@@ -1,21 +1,20 @@
 import { ethers } from 'ethers'
 import { useState, useEffect } from 'react'
-import getContract from '../../utils/contract'
 import { eventHubContract } from '../../utils/interact'
 import { eventList } from '../../utils/ipfs'
-import connect  from '../../utils/connect'
 import useIsConnected from '../../hooks/useIsConnected'
 
 import styles from './Home.module.css'
-
 
 function Home() {
 
   const ipfsGateway = 'https://gateway.pinata.cloud/ipfs'
 
-  const [isConnected] = useIsConnected()
+  const [isConnected, address] = useIsConnected()
   const [contract, setContract] = useState()
   const [events, setEvents] = useState([])
+  const [status, setStatus] = useState('')
+  const [message, setMessage] = useState('No connection to the network.')
 
   function addSmartContractListener() {
     eventHubContract.events.NewRSVP({}, (error, data) => {
@@ -31,33 +30,39 @@ function Home() {
 
   const rsvp = async (eventId, deposit) => {
     if (isConnected) {
-      setContract(getContract())
-      if (contract) {
-        const res = await contract.createNewRSVP(eventId).send({
-          from: '0xfCdcB824747B3b8e4058E90a59468eD0ef538Ae9',
-          value: '0.0023'
-          // value: ethers.utils.formatUnits(deposit, 'ether')
-        })
-        console.log(res)
 
-        contract.events.NewRSVP()
-          .on("connected", function(subscriptionId){ console.log(subscriptionId);})
-          .on('data', function(event){ console.log(event);})
+      const res = await eventHubContract.methods.createNewRSVP(eventId).send({
+        from: address,
+        value: deposit
+        // value: ethers.utils.parseEther(deposit)
+      })
+      console.log(res)
+
+      eventHubContract.events.NewRSVP()
+        .on("connected", function(subscriptionId){ console.log(subscriptionId);})
+        .on('data', function(event){ console.log(event);})
       }
-    } else {
-      const address = await connect()
-      setContract(getContract())
-      // do rsvp
-      console.log(address)
-    }
+
   }
 
   const confirm = async (eventId) => {
-    setContract(getContract())
-    if (contract) {
-      const res = await contract.getConfirmedRSVPs(eventId)
-      console.log(res)
-    }
+
+    // const transactionParameters = {
+    //   to: '0x4dE0EF55De2EA0C78d9BB12B6a57efD083b219a1', // Required except during contract publications.
+    //   from: address, // must match user's active address.
+    //   data: eventHubContract.methods.getConfirmedRSVPs(eventId).encodeABI(),
+    // };
+    //
+    // //sign the transaction
+    //
+    //   const txHash = await window.ethereum.request({
+    //     method: "eth_sendTransaction",
+    //     params: [transactionParameters],
+    //   });
+
+      const txHash = await eventHubContract.methods.getConfirmedRSVPs(eventId).call()
+      console.log(txHash)
+
   }
 
   const getEvents = async () => {

@@ -1,6 +1,5 @@
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-// import { ethers } from 'ethers'
 import AppHeader from './layout/Header'
 import Home from '../pages/Home'
 import Event from '../pages/Event'

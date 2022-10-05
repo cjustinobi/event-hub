@@ -1,15 +1,16 @@
-import {useEffect, useState} from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import {ethers} from 'ethers'
+import { ethers } from 'ethers'
 import styles from './Event.module.css'
-import getContract from '../../utils/contract'
-import {connectWallet} from '../../utils/interact'
+import useIsConnected from '../../hooks/useIsConnected'
+import { connectWallet, eventHubContract, createNewEvent } from '../../utils/interact'
 import { addToIPFS } from '../../utils/ipfs'
 
 function Event() {
 
-  //
-  const [contract, setContract] = useState();
+  const [isConnected, address] = useIsConnected()
+  const [contract, setContract] = useState()
+  const [status, setStatus] = useState('')
   const [eventName, setEventName] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [eventTime, setEventTime] = useState("");
@@ -23,7 +24,23 @@ function Event() {
   async function handleSubmit(e) {
     e.preventDefault()
 
-    const res = await createEvent();
+    if (isConnected) {
+      const CID = await saveToIPFS()
+
+      let deposit = ethers.utils.parseEther(refund);
+      // let deposit = refund
+      let eventDateAndTime = new Date(`${eventDate} ${eventTime}`);
+      let eventTimestamp = eventDateAndTime.getTime();
+
+      const { status } = await createNewEvent(address, {
+        eventTimestamp,
+        deposit,
+        maxCapacity,
+        CID,
+        ID: CID
+      })
+      setStatus(status)
+    }
 
   }
 
@@ -38,82 +55,29 @@ function Event() {
       eventLink,
       eventFile,
       '123'
-    );
-
-    // return console.log(ress)
-    // const res = await contract.totalEvents()
-    // console.log(res.toNumber())
+    )
   }
 
-  const createEvent = async () => {
-    try {
+  async function addSmartContractListener() {
 
-      if (contract) {
-
-        const CID = await saveToIPFS()
-
-
-        let deposit = ethers.utils.parseEther(refund);
-        let eventDateAndTime = new Date(`${eventDate} ${eventTime}`);
-        let eventTimestamp = eventDateAndTime.getTime();
-
-        const txn = await contract.createNewEvent(
-          eventTimestamp,
-          deposit,
-          maxCapacity,
-          CID,
-          CID, /* event ID */
-          { gasLimit: 900000 }
-        );
-
-        // setLoading(true);
-        console.log("Minting...", txn.hash);
-        const wait = await txn.wait();
-        // console.log('wait ', wait)
-
-        const res = await contract.on('NewEventCreated', (
-          eventID,
-          creatorAddress,
-          eventTimestamp,
-          maxCapacity,
-          deposit,
-          eventDataCID) => {
-          let info = {
-            eventID,
-            creatorAddress,
-            eventTimestamp,
-            maxCapacity,
-            deposit,
-            eventDataCID
-          }
-          console.log('jjj', JSON.stringify(info))
-          console.log(res)
-        })
-
-
-
-        setEventID(wait.events[0].args[0]);
-        return wait
-        // setSuccess(true);
-        // setLoading(false);
-        // setMessage("Your event has been created successfully.");
+    eventHubContract.events.NewEventCreated({}, (error, data) => {
+      if (error) {
+        console.log("😥 " + error.message);
       } else {
-        console.log("Error getting contract.");
+        console.log(data.returnValues);
+        console.log("🎉 Your message has been updated!");
       }
-    } catch (error) {
-      // setSuccess(false);
-      // setMessage(`There was an error creating your event: ${error.message}`);
-      // setLoading(false);
-      console.log(error);
-    }
-  };
+    })
+  }
 
   useEffect(() => {
-    setContract(getContract())
+    setContract(connectWallet())
+    addSmartContractListener()
   }, [])
 
   return (
     <div className={styles.container}>
+      <h4>{status}</h4>
       <form
         onSubmit={handleSubmit}
         className="space-y-8 divide-y divide-gray-200"
