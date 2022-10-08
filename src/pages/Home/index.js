@@ -1,38 +1,48 @@
-import { ethers } from 'ethers'
+
 import { useState, useEffect } from 'react'
-import { eventHubContract } from '../../utils/interact'
+
+import { kit, eventHubContract } from '../../utils/interact'
 import { eventList } from '../../utils/ipfs'
-import useIsConnected from '../../hooks/useIsConnected'
+// import useIsConnected from '../../hooks/useIsConnected'
 
 import styles from './Home.module.css'
+
+
+
 
 function Home() {
 
   const ipfsGateway = 'https://gateway.pinata.cloud/ipfs'
 
-  const [isConnected, address] = useIsConnected()
-  const [contract, setContract] = useState()
+  // const [isConnected, address] = useIsConnected()
   const [events, setEvents] = useState([])
   const [status, setStatus] = useState('')
   const [message, setMessage] = useState('No connection to the network.')
+  const [balances, setBalances] = useState({ CELO: 0, cUSD: 0, Vault: 0 });
 
-  function addSmartContractListener() {
-    eventHubContract.events.NewRSVP({}, (error, data) => {
-      if (error) {
-        console.log("😥 " + error.message);
-      } else {
-        console.log(data.returnValues[1]);
-        console.log("");
-        console.log("🎉 Your message has been updated!");
-      }
+  const getBalanceHandle = async () => {
+    const goldtoken = await kit._web3Contracts.getGoldToken();
+
+    const totalBalance = await kit.getTotalBalance(
+      process.env.REACT_APP_ADDRESS
+    );
+
+    const { CELO, cUSD } = totalBalance;
+    setBalances({
+      CELO: kit.web3.utils.fromWei(CELO.toString()),
+      cUSD: kit.web3.utils.fromWei(cUSD.toString())
     });
-  }
+  };
+
+
 
   const rsvp = async (eventId, deposit) => {
-    if (isConnected) {
+    // const result = await getAccount(getWeb3())
+    // return console.log(result)
+    // if (isConnected) {
 
       const res = await eventHubContract.methods.createNewRSVP(eventId).send({
-        from: address,
+        from: process.env.REACT_APP_ADDRESS,
         value: deposit
         // value: ethers.utils.parseEther(deposit)
       })
@@ -41,55 +51,21 @@ function Home() {
       eventHubContract.events.NewRSVP()
         .on("connected", function(subscriptionId){ console.log(subscriptionId);})
         .on('data', function(event){ console.log(event);})
-      }
+    // }
 
   }
 
   const confirm = async (eventId) => {
 
-    // const transactionParameters = {
-    //   to: '0x4dE0EF55De2EA0C78d9BB12B6a57efD083b219a1', // Required except during contract publications.
-    //   from: address, // must match user's active address.
-    //   data: eventHubContract.methods.getConfirmedRSVPs(eventId).encodeABI(),
-    // };
-    //
-    // //sign the transaction
-    //
-    //   const txHash = await window.ethereum.request({
-    //     method: "eth_sendTransaction",
-    //     params: [transactionParameters],
-    //   });
-
-      const txHash = await eventHubContract.methods.getConfirmedRSVPs(eventId).call()
-      console.log(txHash)
+    const txHash = await eventHubContract.methods.getConfirmedRSVPs(eventId).call()
+    console.log(txHash)
 
   }
 
-  const getEvents = async () => {
-
-    const res = await contract.getEventLength()
-    console.log('events ', res.toNumber())
-    if (res.toNumber()) {
-      let events = []
-      let i = 0
-
-      while (i < res.toNumber()) {
-        const eventId = await contract.getEventId(i)
-        if (eventId) {
-          const event = await contract.getEvent(eventId)
-          events.push(event)
-        }
-        i++
-        // await contract.idToEvent()
-      }
-      setEvents(events)
-    }
-  }
 
   useEffect(async () => {
-    // setContract(getContract())
     setEvents(await eventList())
-    addSmartContractListener()
+    getBalanceHandle()
   }, [])
 
 
@@ -102,12 +78,13 @@ function Home() {
           {/*<div>Time: { Date(event.metadata.keyvalues.dateAndTime) }</div>*/}
           <div>Time: { event.metadata.keyvalues.dateAndTime }</div>
           {/*<div>CID: { event.eventDataCID }</div>*/}
-          {/*<div>Maximum capacity: { event.maxCapacity.toNumber() }</div>*/}
-          <div>Deposit: { ethers.utils.formatUnits(event.metadata.keyvalues.deposit, 'ether') }</div>
+          <div>Maximum capacity: { event.maxCapacity }</div>
+          <div>Deposit: { kit.web3.utils.fromWei(event.metadata.keyvalues.deposit, 'ether') }</div>
           <button onClick={() => rsvp(event.ipfs_pin_hash, event.metadata.keyvalues.deposit)}>RSVP</button>
           <button onClick={() => confirm(event.ipfs_pin_hash)}>Get confirmed RSVP</button>
         </div>
       ))}
+      Balances {balances.CELO}
     </div>
   )
 }

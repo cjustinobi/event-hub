@@ -1,17 +1,61 @@
-// require('dotenv').config()
-const alchemyKey = process.env.REACT_APP_ALCHEMY_KEY
-const { createAlchemyWeb3 } = require("@alch/alchemy-web3")
-const web3 = createAlchemyWeb3(alchemyKey)
 
-const contractABI = require('../artifacts/contracts/EventHub.sol/EventHub.json')
-const contractAddress = '0xc52D6596F635c0A65634282a7ADc687D4c8495B8'
 
-export const eventHubContract = new web3.eth.Contract(
-  contractABI.abi,
+import React, { useState, useEffect } from "react";
+import Web3 from "web3";
+import { newKit } from "@celo/contractkit";
+import dotenv from "dotenv";
+import EventHub from '../artifacts/EventHub.json'
+
+// LOAD ENV VAR
+dotenv.config();
+
+export const kit = newKit(process.env.REACT_APP_DATAHUB_NODE_URL);
+const contractAddress = '0x58A09B060Dd62A7e82DBFC37Be62cA4E8adE271C'
+const connectAccount = kit.addAccount(process.env.REACT_APP_PRIVATE_KEY);
+// CONTRACT INSTANCE
+export const eventHubContract = new kit.web3.eth.Contract(
+  EventHub.abi,
   contractAddress
 )
 
-export const connectWallet = async () => {
+// export const getWeb3 = async () => {
+//   let web3 = window.web3;
+//   if (typeof web3 !== "undefined") {
+//     return new Web3(web3.currentProvider);
+//
+//   } else {
+//     return false;
+//   }
+// }
+
+// export const getAccount = async (web3) => {
+//   return await web3.eth.getAccounts();
+// }
+
+export const connectWallet = async function () {
+  if (window.celo) {
+    try {
+      console.log("⚠️ Please approve this DApp to use it.")
+      await window.celo.enable()
+      // notificationOff()
+      // const web3 = new Web3(window.celo)
+      // kit = newKitFromWeb3(web3)
+
+      const accounts = await kit.web3.eth.getAccounts()
+      kit.defaultAccount = accounts[0]
+      return kit.defaultAccount
+
+      // contract = new kit.web3.eth.Contract(marketplaceAbi, MPContractAddress)
+    } catch (error) {
+      console.log(`⚠️ ${error}.`)
+      // notification(`⚠️ ${error}.`)
+    }
+  } else {
+    console.log("⚠️ Please install the CeloExtensionWallet.")
+  }
+}
+
+export const connectWalletxx = async () => {
   if (window.ethereum) {
     try {
       const addressArray = await window.ethereum.request({
