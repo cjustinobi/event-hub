@@ -15,7 +15,8 @@ export default function Home() {
   const isSealed = statusCode => statusCode === 4 // 4: 'SEALED'
 
   const [user, setUser] = useState({loggedIn: null})
-  const [eventText, setEventText] = useState('')
+  const [limit, setLimit] = useState('')
+  const [title, setTitle] = useState('')
   const [eventList, setEventList] = useState([])
   const [lastTransactionId, setLastTransactionId] = useState()
   const [transactionStatus, setTransactionStatus] = useState(null) // NEW
@@ -42,13 +43,13 @@ export default function Home() {
   const createEvent = async (event) => {
     event.preventDefault()
 
-    if (!eventText.length) {
+    if (!title.length) {
       throw new Error('Please add a new greeting string.')
     }
 
     const transactionId = await fcl.mutate({
       cadence: CreateNewEvent,
-      args: (arg, t) => [arg(eventText, t.String)]
+      args: (arg, t) => [arg(title, t.String), arg(limit, t.UInt64)]
     })
 
     setLastTransactionId(transactionId)
@@ -143,9 +144,10 @@ console.log(transactionId)
         <textarea 
           id="eventContents"               
           placeholder="I feel..."
-          value={eventText}
-          onChange={e => setEventText(e.target.value)}
+          value={title}
+          onChange={e => setTitle(e.target.value)}
           name="eventContents" required></textarea>
+          <input type="number" placeholder="title" onChange={e => setLimit(e.target.value)} />
           <small>Share your thoughts with the world.</small>
           <input type="submit" value="Eventccc" />
         </form>
@@ -156,8 +158,8 @@ console.log(transactionId)
 
 {
         eventList.length > 0 ?
-          eventList.map((tweet) => {
-            return (<div key={tweet.id}>{tweet.message}</div>)
+          eventList.map((event) => {
+            return (<div key={event.id}>{event.title} - {event.limit}</div>)
           }) : 'Your tweets will show up here!'
         } 
     </div>

@@ -2,11 +2,13 @@ import EventHub from 0xf8d6e0586b0a20c7
 
 pub struct EventDetails {
     pub let id: UInt64
-    pub let message: String 
+    pub let title: String
+    pub let limit: UInt64
 
-    init(id: UInt64, message: String) {
+    init(id: UInt64, title: String, limit:  UInt64) {
         self.id = id
-        self.message = message
+        self.title = title
+        self.limit = limit
     }
 }
 
@@ -29,7 +31,7 @@ pub fun main(account: Address): [EventDetails] {
 
     for eventID in eventIDs {
         let event = publicRef.borrowTheEvent(id: eventID) ?? panic("this tweet does not exist")
-        let metadata = EventDetails(id: event.id, message: event.detail["message"]!)
+        let metadata = EventDetails(id: event.id, title: event.details.title, limit: event.details.limit!)
         events.append(metadata)
     }
 

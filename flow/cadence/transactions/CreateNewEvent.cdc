@@ -3,7 +3,7 @@
 import EventHub from 0xf8d6e0586b0a20c7
 
 // This transaction creates a new tweet with an argument
-transaction (message: String) {
+transaction (title: String, limit: UInt64) {
     // Let's check that the account has a collection
     prepare(acct: AuthAccount) {
         if acct.borrow<&EventHub.Collection>(from: EventHub.privatePath) != nil {
@@ -19,7 +19,7 @@ transaction (message: String) {
         let collection = acct.borrow<&EventHub.Collection>(from: EventHub.privatePath)
 
         // call the collection's saveTweet method and pass in a Tweet resource
-        collection?.saveEvent(theEvent: <-EventHub.createEvent(message))
-        log("Event created successfully, with message ".concat(message))
+        collection?.saveEvent(theEvent: <-EventHub.createEvent(title, limit))
+        log("Event created successfully, with message ".concat(title))
     }
 }

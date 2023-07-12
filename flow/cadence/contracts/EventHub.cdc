@@ -7,22 +7,30 @@ pub contract EventHub {
     pub let id: UInt64
 
     // String mapping to hold metadata
-    pub var detail: {String: String}
-
-    
+    // pub var detail: {String: String}
+    pub let details: Details
 
     // Initialize both fields in the init function
-    init(message: String) {
+    init(title: String, limit: UInt64) {
       self.id = self.uuid
-      self.detail = {
-          "message": message
-      }
+      self.details = Details(title: title, limit: limit)
+  
     }
   }
 
+    pub struct Details {
+        pub let title: String
+        pub let limit: UInt64
+
+        init(title: String, limit: UInt64) {
+            self.title = title
+            self.limit = limit
+        }
+    }
+
    // Function to create a new Tweet
-    pub fun createEvent(_ message: String): @TheEvent {
-        return <-create TheEvent(message: message)
+    pub fun createEvent(_ title: String, _ limit: UInt64): @TheEvent {
+        return <-create TheEvent(title: title, limit: limit)
     }
 
     pub resource interface CollectionPublic {
