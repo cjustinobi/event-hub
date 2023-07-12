@@ -1,6 +1,7 @@
 {
 	"contracts": {
-		"EventHub": "./flow/cadence/contracts/EventHub.cdc"
+		"EventHub": "./flow/cadence/contracts/EventHub.cdc",
+		"HelloWorld": "./flow/cadence/contracts/HelloWorld.cdc"
 	},
 	"networks": {
 		"emulator": "127.0.0.1:3569",
@@ -20,7 +21,8 @@
 	"deployments": {
 		"emulator": {
 			"emulator-account": [
-				"EventHub"
+				"EventHub",
+				"HelloWorld"
 			]
 		}
 	}

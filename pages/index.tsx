@@ -2,81 +2,90 @@ import Head from 'next/head'
 import "../flow/config";
 import { useState, useEffect } from "react";
 import * as fcl from "@onflow/fcl";
+import * as t from '@onflow/types'
+import { authorizationFunction } from '../utils'
+import GetEventsByAccount from '../flow/cadence/scripts/GetEventsByAccount.cdc'
+import CreateNewEvent from '../flow/cadence/transactions/CreateNewEvent.cdc'
+// import useCurrentUser from '../hooks/useCurrentUser'
+
+// const user = useCurrentUser()
 
 export default function Home() {
 
+  const isSealed = statusCode => statusCode === 4 // 4: 'SEALED'
+
   const [user, setUser] = useState({loggedIn: null})
-  const [name, setName] = useState('')
+  const [eventText, setEventText] = useState('')
+  const [eventList, setEventList] = useState([])
+  const [lastTransactionId, setLastTransactionId] = useState()
   const [transactionStatus, setTransactionStatus] = useState(null) // NEW
 
-  useEffect(() => fcl.currentUser.subscribe(setUser), [])
+  const getEvents = async (account) => {
+    account = user?.addr;
 
-  const sendQuery = async () => {
-    const profile = await fcl.query({
-      cadence: `
-        import Profile from 0xProfile
+    let res;
 
-        pub fun main(address: Address): Profile.ReadOnly? {
-          return Profile.read(address)
-        }
-      `,
-      args: (arg, t) => [arg(user.addr, t.Address)]
+    try {
+      res = await fcl.query({
+        cadence: GetEventsByAccount,
+        args: (arg, t) => [arg(account, t.Address)]
+      })
+    } catch(e) {
+      res = []
+    }
+
+    console.log(res)
+
+    setEventList(res.sort((a, b) => b.id - a.id))
+  }
+
+  const createEvent = async (event) => {
+    event.preventDefault()
+
+    if (!eventText.length) {
+      throw new Error('Please add a new greeting string.')
+    }
+
+    const transactionId = await fcl.mutate({
+      cadence: CreateNewEvent,
+      args: (arg, t) => [arg(eventText, t.String)]
     })
 
-    setName(profile?.name ?? 'No Profile')
+    setLastTransactionId(transactionId)
   }
+  
+  useEffect(() => fcl.currentUser.subscribe(setUser), [])
+
+
 
   const initAccount = async () => {
     const transactionId = await fcl.mutate({
       cadence: `
-        import Profile from 0xProfile
+        import HelloWorld from 0xf8d6e0586b0a20c7
 
         transaction {
-          prepare(account: AuthAccount) {
-            // Only initialize the account if it hasn't already been initialized
-            if (!Profile.check(account.address)) {
-              // This creates and stores the profile in the user's account
-              account.save(<- Profile.new(), to: Profile.privatePath)
-
-              // This creates the public capability that lets applications read the profile's info
-              account.link<&Profile.Base{Profile.Public}>(Profile.publicPath, target: Profile.privatePath)
-            }
+          prepare(acct: AuthAccount) {
+            // Here we create a resource and move it to the variable newHello,
+            // then we save it in the account storage
+            let newHello <- HelloWorld.createHelloAsset()
+    
+            acct.save(<-newHello, to: /storage/HelloAssetTutorial)
           }
         }
       `,
-      payer: fcl.authz,
-      proposer: fcl.authz,
-      authorizations: [fcl.authz],
+      payer: authorizationFunction,
+      proposer: authorizationFunction,
+      authorizations: [authorizationFunction],
       limit: 50
     })
-
-    const transaction = await fcl.tx(transactionId).onceSealed()
-    console.log(transaction)
+console.log(transactionId)
+    // const transaction = await fcl.tx(transactionId).onceSealed()
+    // console.log('transaction')
+    // console.log(transaction)
+    console.log(transactionId)
   }
 
-  // NEW
-  const executeTransaction = async () => {
-    const transactionId = await fcl.mutate({
-      cadence: `
-        import Profile from 0xProfile
 
-        transaction(name: String) {
-          prepare(account: AuthAccount) {
-            account
-              .borrow<&Profile.Base{Profile.Owner}>(from: Profile.privatePath)!
-              .setName(name)
-          }
-        }
-      `,
-      args: (arg, t) => [arg("Flow Developer!", t.String)],
-      payer: fcl.authz,
-      proposer: fcl.authz,
-      authorizations: [fcl.authz],
-      limit: 50
-    })
-
-    fcl.tx(transactionId).subscribe(res => setTransactionStatus(res.status))
-  }
 
   const AuthedState = () => {
     return (
@@ -84,9 +93,7 @@ export default function Home() {
         <div>Address: {user?.addr ?? "No Address"}</div>
         <div>Profile Name: {name ?? "--"}</div>
         <div>Transaction Status: {transactionStatus ?? "--"}</div> {/* NEW */}
-        <button onClick={sendQuery}>Send Query</button>
         <button onClick={initAccount}>Init Account</button>
-        <button onClick={executeTransaction}>Execute Transaction</button> {/* NEW */}
         <button onClick={fcl.unauthenticate}>Log Out</button>
       </div>
     )
@@ -101,6 +108,28 @@ export default function Home() {
     )
   }
 
+  useEffect(() => {
+    if (lastTransactionId) {
+      console.log('Last Transaction ID: ', lastTransactionId)
+
+      fcl.tx(lastTransactionId).subscribe(res => {
+        setTransactionStatus(res.statusString)
+  
+        // Query for new chain string again if status is sealed
+        if (isSealed(res.status)) {
+          getEvents()
+        }
+      })
+    }
+    const fetchEvents = async () => {
+      await getEvents(user?.addr);
+    };
+
+    if (user?.addr) {
+      fetchEvents();
+    }
+  }, [lastTransactionId, user])
+
   return (
     <div>
       <Head>
@@ -109,10 +138,28 @@ export default function Home() {
         <link rel="icon" href="/favicon.png" />
       </Head>
       <h1>Flow App</h1>
+      <form onSubmit={createEvent}>
+        <label htmlFor="tweet">Create a new Tweet</label>
+        <textarea 
+          id="eventContents"               
+          placeholder="I feel..."
+          value={eventText}
+          onChange={e => setEventText(e.target.value)}
+          name="eventContents" required></textarea>
+          <small>Share your thoughts with the world.</small>
+          <input type="submit" value="Eventccc" />
+        </form>
       {user.loggedIn
         ? <AuthedState />
         : <UnauthenticatedState />
       }
+
+{
+        eventList.length > 0 ?
+          eventList.map((tweet) => {
+            return (<div key={tweet.id}>{tweet.message}</div>)
+          }) : 'Your tweets will show up here!'
+        } 
     </div>
   )
 }

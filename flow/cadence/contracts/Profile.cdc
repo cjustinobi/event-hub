@@ -80,7 +80,7 @@ pub contract Profile {
     }
   }
   
-  pub fun new(): @Profile.Base {
+  pub fun new(): @Base {
     return <- create Base()
   }
   
@@ -121,11 +121,11 @@ pub contract Profile {
     self.privatePath = /storage/profile
     
     self.account.save(<- self.new(), to: self.privatePath)
-    self.account.link<&Base{Public}>(self.publicPath, target: self.privatePath)
+    // self.account.link<&Base{Public}>(self.publicPath, target: self.privatePath)
     
-    self.account
-      .borrow<&Base{Owner}>(from: self.privatePath)!
-      .setName("qvvg")
+    // self.account
+    //   .borrow<&Base{Owner}>(from: self.privatePath)!
+    //   .setName("qvvg")
   }
 }
 

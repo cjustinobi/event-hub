@@ -2,131 +2,88 @@ pub contract EventHub {
   pub let publicPath: PublicPath
   pub let privatePath: StoragePath
 
-  pub resource interface Public {
-    pub fun getName(): String
-    pub fun getAvatar(): String
-    pub fun getColor(): String
-    pub fun getInfo(): String
-    pub fun asReadOnly(): EventHub.ReadOnly
-  }
-  
-  pub resource interface Owner {
-    pub fun getName(): String
-    pub fun getAvatar(): String
-    pub fun getColor(): String
-    pub fun getInfo(): String
+  pub resource TheEvent {
+    // The unique ID that differentiates each Tweet
+    pub let id: UInt64
+
+    // String mapping to hold metadata
+    pub var detail: {String: String}
+
     
-    pub fun setName(_ name: String) {
-      pre {
-        name.length <= 15: "Names must be under 15 characters long."
-      }
-    }
-    pub fun setAvatar(_ src: String)
-    pub fun setColor(_ color: String)
-    pub fun setInfo(_ info: String) {
-      pre {
-        info.length <= 280: "EventHub Info can at max be 280 characters long."
+
+    // Initialize both fields in the init function
+    init(message: String) {
+      self.id = self.uuid
+      self.detail = {
+          "message": message
       }
     }
   }
-  
-  pub resource Base: Owner, Public {
-    access(self) var name: String
-    access(self) var avatar: String
-    access(self) var color: String
-    access(self) var info: String
-    
+
+   // Function to create a new Tweet
+    pub fun createEvent(_ message: String): @TheEvent {
+        return <-create TheEvent(message: message)
+    }
+
+    pub resource interface CollectionPublic {
+        pub fun getIDs(): [UInt64]
+        pub fun borrowTheEvent(id: UInt64): &TheEvent? 
+    }
+
+    // NEW! 
+    // Declare a Collection resource that contains Tweets.
+    // it does so via `saveTweet()`, 
+    // and stores them in `self.tweets`
+    pub resource Collection: CollectionPublic {
+        // an object containing the tweets
+        pub var theEvents: @{UInt64: TheEvent}
+
+        // a method to save a tweet in the collection
+        pub fun saveEvent(theEvent: @TheEvent) {
+            // add the new tweet to the dictionary with 
+            // a force assignment (check glossary!)
+            // If there were to be a value at that key, 
+            // it would fail/revert. 
+            self.theEvents[theEvent.id] <-! theEvent
+        }
+
+        // get all the id's of the tweets in the collection
+        pub fun getIDs(): [UInt64] {
+            return self.theEvents.keys
+        }
+
+        pub fun borrowTheEvent(id: UInt64): &TheEvent? {
+            if self.theEvents[id] != nil {
+                let ref = (&self.theEvents[id] as &EventHub.TheEvent?)!
+                return ref
+            }
+            return nil
+        }
+
+        init() {
+            self.theEvents <- {}
+        }
+
+        destroy() {
+            // when the Colletion resource is destroyed, 
+            // we need to explicitly destroy the tweets too.
+            destroy self.theEvents
+        }
+    }
+
+    // create a new collection
+    pub fun createEmptyCollection(): @Collection {
+        return <- create Collection()
+    }
+
     init() {
-      self.name = "Anon"
-      self.avatar = ""
-      self.color = "#232323"
-      self.info = ""
+        // assign the storage path to /storage/TweetCollection
+        self.privatePath = /storage/TheEventCollection
+        self.publicPath = /public/TheEventCollection
+        // save the empty collection to the storage path
+        self.account.save(<-self.createEmptyCollection(), to: self.privatePath)
+        // publish a reference to the Collection in storage
+        self.account.link<&{CollectionPublic}>(self.publicPath, target: self.privatePath)
     }
-    
-    pub fun getName(): String { return self.name }
-    pub fun getAvatar(): String { return self.avatar }
-    pub fun getColor(): String {return self.color }
-    pub fun getInfo(): String { return self.info }
-    
-    pub fun setName(_ name: String) { self.name = name }
-    pub fun setAvatar(_ src: String) { self.avatar = src }
-    pub fun setColor(_ color: String) { self.color = color }
-    pub fun setInfo(_ info: String) { self.info = info }
-    
-    pub fun asReadOnly(): EventHub.ReadOnly {
-      return EventHub.ReadOnly(
-        address: self.owner?.address,
-        name: self.getName(),
-        avatar: self.getAvatar(),
-        color: self.getColor(),
-        info: self.getInfo()
-      )
-    }
-  }
 
-  pub struct ReadOnly {
-    pub let address: Address?
-    pub let name: String
-    pub let avatar: String
-    pub let color: String
-    pub let info: String
-    
-    init(address: Address?, name: String, avatar: String, color: String, info: String) {
-      self.address = address
-      self.name = name
-      self.avatar = avatar
-      self.color = color
-      self.info = info
-    }
-  }
-  
-  pub fun new(): @EventHub.Base {
-    return <- create Base()
-  }
-  
-  pub fun check(_ address: Address): Bool {
-    return getAccount(address)
-      .getCapability<&{EventHub.Public}>(EventHub.publicPath)
-      .check()
-  }
-  
-  pub fun fetch(_ address: Address): &{EventHub.Public} {
-    return getAccount(address)
-      .getCapability<&{EventHub.Public}>(EventHub.publicPath)
-      .borrow()!
-  }
-  
-  pub fun read(_ address: Address): EventHub.ReadOnly? {
-    if let EventHub = getAccount(address).getCapability<&{EventHub.Public}>(EventHub.publicPath).borrow() {
-      return EventHub.asReadOnly()
-    } else {
-      return nil
-    }
-  }
-  
-  pub fun readMultiple(_ addresses: [Address]): {Address: EventHub.ReadOnly} {
-    let EventHubs: {Address: EventHub.ReadOnly} = {}
-    for address in addresses {
-      let EventHub = EventHub.read(address)
-      if EventHub != nil {
-        EventHubs[address] = EventHub!
-      }
-    }
-    return EventHubs
-  }
-
-    
-  init() {
-    self.publicPath = /public/EventHub
-    self.privatePath = /storage/EventHub
-    
-    self.account.save(<- self.new(), to: self.privatePath)
-    self.account.link<&Base{Public}>(self.publicPath, target: self.privatePath)
-    
-    self.account
-      .borrow<&Base{Owner}>(from: self.privatePath)!
-      .setName("qvvg")
-  }
 }
-
-// 2d39f0c52f51af47c557614b8107ce884e34cf432bc693b1fa9f02b10c216143
