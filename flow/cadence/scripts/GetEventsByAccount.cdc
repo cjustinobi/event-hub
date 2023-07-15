@@ -1,4 +1,5 @@
 import EventHub from 0xf8d6e0586b0a20c7
+// import EventHub from 0x92e7bdd682b677ee
 
 pub struct EventDetails {
     pub let id: UInt64
@@ -12,7 +13,7 @@ pub struct EventDetails {
     }
 }
 
-// Get tweets owned by an account
+// Get events owned by an account
 pub fun main(account: Address): [EventDetails] {
     // Get the public account object for account
     let eventOwner = getAccount(account)
@@ -31,8 +32,8 @@ pub fun main(account: Address): [EventDetails] {
 
     for eventID in eventIDs {
         let event = publicRef.borrowTheEvent(id: eventID) ?? panic("this tweet does not exist")
-        let metadata = EventDetails(id: event.id, title: event.details.title, limit: event.details.limit!)
-        events.append(metadata)
+        let details = EventDetails(id: event.id, title: event.details.title, limit: event.details.limit!)
+        events.append(details)
     }
 
     return events

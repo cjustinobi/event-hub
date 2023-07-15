@@ -1,7 +1,6 @@
 {
 	"contracts": {
-		"EventHub": "./flow/cadence/contracts/EventHub.cdc",
-		"HelloWorld": "./flow/cadence/contracts/HelloWorld.cdc"
+		"EventHub": "./flow/cadence/contracts/EventHub.cdc"
 	},
 	"networks": {
 		"emulator": "127.0.0.1:3569",
@@ -16,14 +15,23 @@
 				"type": "file",
 				"location": "./emulator.key"
 			}
+		},
+		"justin": {
+			"address": "92e7bdd682b677ee",
+			"key": {
+				"type": "file",
+				"location": "./justin.pkey"
+			}
 		}
 	},
 	"deployments": {
 		"emulator": {
 			"emulator-account": [
-				"EventHub",
-				"HelloWorld"
+				"EventHub"
 			]
+		},
+		"testnet": {
+			"justin": ["EventHub"]
 		}
 	}
 }

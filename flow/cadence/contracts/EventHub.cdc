@@ -39,12 +39,12 @@ pub contract EventHub {
     }
 
     // NEW! 
-    // Declare a Collection resource that contains Tweets.
+    // Declare a Collection resource that contains events.
     // it does so via `saveTweet()`, 
-    // and stores them in `self.tweets`
+    // and stores them in `self.events`
     pub resource Collection: CollectionPublic {
-        // an object containing the tweets
-        pub var theEvents: @{UInt64: TheEvent}
+        // an object containing the events
+        pub(set) var theEvents: @{UInt64: TheEvent}
 
         // a method to save a tweet in the collection
         pub fun saveEvent(theEvent: @TheEvent) {
@@ -55,7 +55,7 @@ pub contract EventHub {
             self.theEvents[theEvent.id] <-! theEvent
         }
 
-        // get all the id's of the tweets in the collection
+        // get all the id's of the events in the collection
         pub fun getIDs(): [UInt64] {
             return self.theEvents.keys
         }
@@ -74,7 +74,7 @@ pub contract EventHub {
 
         destroy() {
             // when the Colletion resource is destroyed, 
-            // we need to explicitly destroy the tweets too.
+            // we need to explicitly destroy the events too.
             destroy self.theEvents
         }
     }
