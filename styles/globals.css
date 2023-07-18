@@ -16,6 +16,10 @@
   }
 }
 
+html {
+  /* font-family: var(--font-kalam); */
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(

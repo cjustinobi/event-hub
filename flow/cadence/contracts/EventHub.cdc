@@ -3,17 +3,15 @@ pub contract EventHub {
   pub let privatePath: StoragePath
 
   pub resource TheEvent {
-    // The unique ID that differentiates each Tweet
+    // The unique ID that differentiates each Event
     pub let id: UInt64
 
-    // String mapping to hold metadata
-    // pub var detail: {String: String}
     pub let details: Details
 
     // Initialize both fields in the init function
-    init(title: String, limit: UInt64) {
+    init(title: String, limit: UInt64, startTime: UInt128, description: String, imagePath: String) {
       self.id = self.uuid
-      self.details = Details(title: title, limit: limit)
+      self.details = Details(title: title, limit: limit, startTime: startTime, description: description, imagePath: imagePath)
   
     }
   }
@@ -21,16 +19,22 @@ pub contract EventHub {
     pub struct Details {
         pub let title: String
         pub let limit: UInt64
+        pub let startTime: UInt128
+        pub let description: String
+        pub let imagePath: String
 
-        init(title: String, limit: UInt64) {
+        init(title: String, limit: UInt64, startTime: UInt128, description: String, imagePath: String) {
             self.title = title
             self.limit = limit
+            self.startTime = startTime
+            self.description = description
+            self.imagePath = imagePath
         }
     }
 
-   // Function to create a new Tweet
-    pub fun createEvent(_ title: String, _ limit: UInt64): @TheEvent {
-        return <-create TheEvent(title: title, limit: limit)
+   // Function to create a new Event
+    pub fun createEvent(_ title: String, _ limit: UInt64, _ startTime: UInt128, _ description: String, _ imagePath: String): @TheEvent {
+        return <-create TheEvent(title: title, limit: limit, startTime: startTime, description: description, imagePath: imagePath)
     }
 
     pub resource interface CollectionPublic {
@@ -40,15 +44,15 @@ pub contract EventHub {
 
     // NEW! 
     // Declare a Collection resource that contains events.
-    // it does so via `saveTweet()`, 
+    // it does so via `saveEvent()`, 
     // and stores them in `self.events`
     pub resource Collection: CollectionPublic {
         // an object containing the events
         pub(set) var theEvents: @{UInt64: TheEvent}
 
-        // a method to save a tweet in the collection
+        // a method to save a event in the collection
         pub fun saveEvent(theEvent: @TheEvent) {
-            // add the new tweet to the dictionary with 
+            // add the new event to the dictionary with 
             // a force assignment (check glossary!)
             // If there were to be a value at that key, 
             // it would fail/revert. 

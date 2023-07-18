@@ -43,3 +43,5 @@ export const authorizationFunction = async (account) => {
 }
 
 export const truncate = input => `${input.substring(0, 5)}...${input.slice(-4)}`
+
+export const toTimestamp = time => time ? (new Date(time)).getTime() / 1000 : undefined
