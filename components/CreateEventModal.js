@@ -3,17 +3,14 @@ import * as fcl from '@onflow/fcl'
 import CreateNewEvent from '../flow/cadence/transactions/CreateNewEvent.cdc'
 import { toTimestamp } from '../utils';
 
-interface CreateEventModalProps {
-  modal: boolean;
-}
 
-const CreateEventModal: React.FC<CreateEventModalProps> = ({modal, hideModal}) => {
+const CreateEventModal = ({modal, hideModal}) => {
 
 const isSealed = statusCode => statusCode === 4 
 
 const [limit, setLimit] = useState('')
   const [title, setTitle] = useState('')
-  const [startTime, setStartTime] = useState<number | undefined>()
+  const [startTime, setStartTime] = useState()
   const [description, setDescription] = useState('')
   const [imagePath, setImagePath] = useState('')
   const [lastTransactionId, setLastTransactionId] = useState()
