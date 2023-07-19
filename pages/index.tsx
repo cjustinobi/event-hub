@@ -80,7 +80,7 @@ export default function Home() {
         <p>Get refunded for attending while you share from a pool of event absentees. It is that simple!</p>
       </div>
 
-    <div className="flex ml-[6rem] mr-[6rem]">
+    <div className="my-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         { eventList.length > 0 ?
             eventList.map((event) => {
               return (<EventCard key={event.id} event={event} />)
