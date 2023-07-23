@@ -1,5 +1,5 @@
-import EventHub from 0xf8d6e0586b0a20c7
-// import EventHub from 0x92e7bdd682b677ee
+// import EventHub from 0xf8d6e0586b0a20c7
+import EventHub from 0x92e7bdd682b677ee
 
 pub struct EventDetails {
     pub let id: UInt64

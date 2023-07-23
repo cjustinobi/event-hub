@@ -1,7 +1,7 @@
 // Create new Tweet
 
-import EventHub from 0xf8d6e0586b0a20c7
-// import EventHub from 0x92e7bdd682b677ee
+// import EventHub from 0xf8d6e0586b0a20c7
+import EventHub from 0x92e7bdd682b677ee
 
 // This transaction creates a new tweet with an argument
 transaction (title: String, limit: UInt64, startTime: UInt128, description: String, imagePath: String) {

@@ -42,7 +42,7 @@ const Header = () => {
             </div>
 			        <div className="flex space-x-8- xl:space-x-16- items-center justify-start">
                 <div onClick={() => setModal(true)} className="flex space-x-2 items-center justify-center text-base text-white cursor-pointer border rounded-3xl md:px-8 2xl:px-16 py-6">
-                  Register
+                  Create Event
                 </div>
                 <div className="relative">
                 <div onMouseEnter={handleMouseEnter} className='cursor-pointer inline-flex ml-8 xl:ml-16 items-center justify-center md:px-8 2xl:px-16 py-6 border rounded-3xl'>
